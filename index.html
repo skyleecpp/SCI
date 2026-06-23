@@ -136,11 +136,6 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 .login-logo h1{font-size:20px;font-weight:700;margin-top:8px}
 .login-logo p{font-size:13px;color:var(--text2);margin-top:4px}
 
-/* SETUP / CONFIG GATE */
-.setup-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:var(--bg)}
-.setup-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:480px}
-.setup-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;font-size:13px;color:var(--text2);line-height:1.6}
-.setup-num{width:22px;height:22px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:2px}
 code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:12px}
 
 /* EMPTY STATES */
@@ -188,43 +183,15 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
 </head>
 <body>
 
-
-<div id="page-setup" class="page active">
-  <div class="setup-wrap">
-    <div class="setup-card">
-      <div style="text-align:center;margin-bottom:24px">
-        <div style="font-size:40px">🏫</div>
-        <h1 style="font-size:20px;font-weight:700;margin-top:8px">SciFinder Setup</h1>
-        <p style="font-size:13px;color:var(--text2);margin-top:4px">Connect your Supabase database to continue</p>
-      </div>
-      <div style="background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:20px">
-        <div class="setup-step"><div class="setup-num">1</div><div>Create a free project at <strong>supabase.com</strong></div></div>
-        <div class="setup-step"><div class="setup-num">2</div><div>In <strong>SQL Editor</strong>, run the contents of <code>supabase_schema.sql</code> (included with this file)</div></div>
-        <div class="setup-step"><div class="setup-num">3</div><div>Copy your <strong>Project URL</strong> and <strong>anon public key</strong> from Project Settings → API, then paste below</div></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Supabase Project URL</label>
-        <input type="text" class="form-input" id="cfg-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Supabase Anon Key</label>
-        <input type="text" class="form-input" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-      </div>
-      <button class="btn btn-primary btn-full" onclick="initSupabase()">Connect & continue</button>
-      <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:12px">These credentials are stored only in your browser's localStorage and are never sent anywhere else.</p>
-    </div>
-  </div>
-</div>
-
 <!-- ════════════════════════════════════════════
      PAGE: LOGIN
      ════════════════════════════════════════════ -->
-<div id="page-login" class="page">
+<div id="page-login" class="page active">
   <div class="login-wrap">
     <div class="login-card">
       <div class="login-logo">
         <div class="logo-icon">🏫</div>
-        <h1>SciFinder</h1>
+        <h1>SchoolFind</h1>
         <p>Lost & Found Management System</p>
       </div>
       <div class="form-group">
@@ -258,7 +225,7 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
       <p style="font-size:12px;color:var(--text3);text-align:center;margin-top:16px">
         Default staff: <code style="font-size:11px">admin</code> / <code style="font-size:11px">admin123</code>
       </p>
-      <button class="btn btn-sm" style="margin-top:10px;width:100%;font-size:11px;color:var(--text3)" onclick="resetConfig()">⚙️ Change Supabase connection</button>
+
     </div>
   </div>
 </div>
@@ -268,7 +235,7 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
      ════════════════════════════════════════════ -->
 <div id="page-staff" class="page">
   <div class="topbar no-print">
-    <span class="topbar-brand" onclick="navTo('staff')"><span>🏫</span> SciFinder</span>
+    <span class="topbar-brand" onclick="navTo('staff')"><span>🏫</span> SchoolFind</span>
     <div class="topbar-right">
       <span style="font-size:12px;color:var(--text2)" id="staff-name-label"></span>
       <div class="avatar" id="staff-avatar" onclick="doLogout()" title="Sign out">?</div>
@@ -322,15 +289,15 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
       <div class="card-title">⚙️ School settings</div>
       <div class="form-group">
         <label class="form-label">School name</label>
-        <input type="text" class="form-input" id="setting-school" placeholder="ACNSTHS">
+        <input type="text" class="form-input" id="setting-school" placeholder="e.g. Bagong Silangan National High School">
       </div>
       <div class="form-group">
         <label class="form-label">Lost & Found office location</label>
-        <input type="text" class="form-input" id="setting-office" placeholder="e.g. Guidance Office">
+        <input type="text" class="form-input" id="setting-office" placeholder="e.g. Guidance Office, Room 101">
       </div>
       <div class="form-group">
         <label class="form-label">Base URL for QR codes</label>
-        <input type="text" class="form-input" id="setting-url" placeholder="https://yourschool.github.io/SciFinder">
+        <input type="text" class="form-input" id="setting-url" placeholder="https://yourschool.github.io/schoolfind">
         <p style="font-size:11px;color:var(--text3);margin-top:4px">Where this file is hosted. QR codes will link to: [Base URL]#scan/QR-001</p>
       </div>
       <div class="btn-row">
@@ -373,7 +340,7 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
      ════════════════════════════════════════════ -->
 <div id="page-scan" class="page">
   <div class="topbar no-print">
-    <span class="topbar-brand" onclick="navTo('login')"><span>🏫</span> SciFinder</span>
+    <span class="topbar-brand" onclick="navTo('login')"><span>🏫</span> SchoolFind</span>
     <div class="topbar-right">
       <button class="btn btn-sm" onclick="navTo('login')">Staff login</button>
     </div>
@@ -386,7 +353,7 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
      ════════════════════════════════════════════ -->
 <div id="page-student" class="page">
   <div class="topbar">
-    <span class="topbar-brand"><span>🏫</span> SciFinder</span>
+    <span class="topbar-brand"><span>🏫</span> SchoolFind</span>
     <div class="topbar-right">
       <div class="avatar" id="student-avatar">?</div>
       <div class="avatar" onclick="doLogout()" title="Sign out" style="background:var(--surface2);color:var(--text2)">↩</div>
@@ -466,47 +433,15 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
 
 <script>
 // ════════════════════════════════════════════════════════════
-//  CONFIG — stored in localStorage so the HTML file itself
-//  needs no editing after initial setup via the config gate.
+//  SUPABASE CONFIG — paste your credentials here once
 // ════════════════════════════════════════════════════════════
-const CFG_KEY = 'sf_supabase_cfg';
-
-function loadConfig() {
-  try { return JSON.parse(localStorage.getItem(CFG_KEY)); } catch { return null; }
-}
-function saveConfig(url, key) {
-  localStorage.setItem(CFG_KEY, JSON.stringify({ url, key }));
-}
-function resetConfig() {
-  localStorage.removeItem(CFG_KEY);
-  navTo('setup');
-}
+const SUPABASE_URL  = 'https://zwimuornfatcqfgnrghl.supabase.co'
+const SUPABASE_KEY  = 'sb_publishable_oFMcYes0j3q1FTELKCHxXQ_sMAE6N8z';
 
 // ════════════════════════════════════════════════════════════
-//  SUPABASE CLIENT — initialised once, reused everywhere
+//  SUPABASE CLIENT — initialised once on page load
 // ════════════════════════════════════════════════════════════
-let SB = null; // Supabase client
-
-async function initSupabase(urlArg, keyArg) {
-  const url = urlArg || document.getElementById('cfg-url')?.value.trim();
-  const key = keyArg || document.getElementById('cfg-key')?.value.trim();
-  if (!url || !key) { showToast('❌ Enter both URL and key'); return; }
-
-  setBusy(true, 'login-btn');
-  try {
-    SB = window.supabase.createClient(url, key);
-    // Verify connection with a lightweight query
-    const { error } = await SB.from('settings').select('id').limit(1);
-    if (error) throw error;
-    saveConfig(url, key);
-    setBusy(false, 'login-btn');
-    checkRoute();
-  } catch (e) {
-    setBusy(false, 'login-btn');
-    SB = null;
-    showToast('❌ Connection failed: ' + (e.message || 'check URL and key'));
-  }
-}
+const SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ════════════════════════════════════════════════════════════
 //  DATABASE ABSTRACTION LAYER
@@ -708,38 +643,21 @@ function navTo(page, params = {}) {
 }
 
 async function checkRoute() {
-  // 1. Check if Supabase is configured
-  const cfg = loadConfig();
-  if (!cfg) { navTo('setup'); return; }
-
-  // 2. Init Supabase client from saved config
-  if (!SB) {
-    SB = window.supabase.createClient(cfg.url, cfg.key);
-    // Quiet verify — if it fails, show setup
-    try {
-      const { error } = await SB.from('settings').select('id').limit(1);
-      if (error) throw error;
-    } catch {
-      SB = null;
-      navTo('setup');
-      return;
-    }
-  }
-
-  // 3. Check for QR scan hash
+  // 1. Check for QR scan hash (no login required)
   const hash = location.hash.replace('#', '');
   if (hash.startsWith('scan/')) {
     navTo('scan', { qrId: decodeURIComponent(hash.replace('scan/', '')) });
     return;
   }
 
-  // 4. Check existing session
+  // 2. Resume existing session
   const sess = getSession();
   if (sess) {
     navTo(sess.role === 'staff' ? 'staff' : 'student');
     return;
   }
 
+  // 3. Default: login page
   navTo('login');
 }
 
@@ -1129,7 +1047,7 @@ async function renderScanPage(qrId) {
     DB.getStudentByQR(qrId),
     DB.getSettings()
   ]);
-  const school = cfg?.school || 'SciFinder';
+  const school = cfg?.school || 'SchoolFind';
   const office = cfg?.office || 'the school office';
 
   if (se || !student) {
@@ -1333,7 +1251,7 @@ async function exportCSV() {
   const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'SciFinder_students.csv';
+  a.download = 'schoolfind_students.csv';
   a.click();
   showToast('⬇️ Exported ' + students.length + ' students');
 }
