@@ -138,29 +138,24 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 
 code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:12px}
 
-/* EMPTY STATES */
 .empty{text-align:center;padding:48px 24px;color:var(--text2)}
 .empty-icon{font-size:40px;margin-bottom:12px}
 .empty-title{font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text)}
 .empty-sub{font-size:13px;line-height:1.6}
 
-/* LOADING SPINNER */
 .spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
 .loading-center{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;gap:12px;color:var(--text2);font-size:13px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* TOAST */
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#1a1a18;color:#fff;padding:12px 20px;border-radius:100px;font-size:13px;font-weight:500;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;pointer-events:none;white-space:nowrap;max-width:calc(100vw - 32px)}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 
-/* MODAL */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:flex-end;justify-content:center}
 .modal-bg.open{display:flex}
 .modal{background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
 .modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px}
 .modal-title{font-size:17px;font-weight:700;margin-bottom:16px}
 
-/* MISC */
 .section-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;margin-top:20px}
 .section-label:first-child{margin-top:0}
 .info-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;gap:12px}
@@ -183,9 +178,6 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════
-     PAGE: LOGIN
-     ════════════════════════════════════════════ -->
 <div id="page-login" class="page active">
   <div class="login-wrap">
     <div class="login-card">
@@ -230,9 +222,7 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     PAGE: STAFF PORTAL
-     ════════════════════════════════════════════ -->
+
 <div id="page-staff" class="page">
   <div class="topbar no-print">
     <span class="topbar-brand" onclick="navTo('staff')"><span>🏫</span> SciFinder</span>
@@ -335,9 +325,6 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     PAGE: SCAN (public — no login needed)
-     ════════════════════════════════════════════ -->
 <div id="page-scan" class="page">
   <div class="topbar no-print">
     <span class="topbar-brand" onclick="navTo('login')"><span>🏫</span> SciFinder</span>
@@ -348,9 +335,6 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
   <div id="scan-content"></div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     PAGE: STUDENT DASHBOARD
-     ════════════════════════════════════════════ -->
 <div id="page-student" class="page">
   <div class="topbar">
     <span class="topbar-brand"><span>🏫</span> SciFinder</span>
@@ -369,9 +353,6 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     MODAL: ADD STUDENT
-     ════════════════════════════════════════════ -->
 <div class="modal-bg" id="modal-add-student">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -417,9 +398,6 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     MODAL: ITEM / STUDENT DETAIL
-     ════════════════════════════════════════════ -->
 <div class="modal-bg" id="modal-detail">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -432,25 +410,11 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
 <div id="toast"></div>
 
 <script>
-// ════════════════════════════════════════════════════════════
-//  SUPABASE CONFIG — paste your credentials here once
-// ════════════════════════════════════════════════════════════
 const SUPABASE_URL  = 'https://zwimuornfatcqfgnrghl.supabase.co'
 const SUPABASE_KEY  = 'sb_publishable_oFMcYes0j3q1FTELKCHxXQ_sMAE6N8z';
-
-// ════════════════════════════════════════════════════════════
-//  SUPABASE CLIENT — initialised once on page load
-// ════════════════════════════════════════════════════════════
 const SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ════════════════════════════════════════════════════════════
-//  DATABASE ABSTRACTION LAYER
-//  All methods return { data, error } like Supabase does.
-//  Every caller awaits these — no sync data access anywhere.
-// ════════════════════════════════════════════════════════════
 const DB = {
 
-  // ── SETTINGS ──────────────────────────────────────────────
   async getSettings() {
     const { data, error } = await SB.from('settings').select('*').eq('id', 1).single();
     return { data, error };
@@ -484,7 +448,6 @@ const DB = {
     return await q;
   },
   async getStudentByQR(qrId) {
-    // Public scan: only return name and grade (no contact, no LRN)
     const { data, error } = await SB.from('students')
       .select('lrn,full_name,grade,section')
       .eq('qr_id', qrId)
@@ -520,11 +483,9 @@ const DB = {
       .order('qr_id');
   },
   async importStudents(rows) {
-    // Upsert so re-importing doesn't duplicate
     return await SB.from('students').upsert(rows, { onConflict: 'lrn', ignoreDuplicates: true });
   },
 
-  // ── ITEM REPORTS ──────────────────────────────────────────
   async getReports(statusFilter) {
     let q = SB.from('item_reports')
       .select('id,qr_id,student_lrn,description,category,location,found_by,found_date,notes,status,read,created_at')
@@ -579,17 +540,10 @@ const DB = {
   }
 };
 
-// ════════════════════════════════════════════════════════════
-//  SESSION — still uses localStorage (it's only metadata,
-//  no student data, and expires on logout)
-// ════════════════════════════════════════════════════════════
 function getSession() { try { return JSON.parse(sessionStorage.getItem('sf_sess')); } catch { return null; } }
 function setSession(s) { sessionStorage.setItem('sf_sess', JSON.stringify(s)); }
 function clearSession() { sessionStorage.removeItem('sf_sess'); }
 
-// ════════════════════════════════════════════════════════════
-//  UTILITIES
-// ════════════════════════════════════════════════════════════
 function uid() { return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2); }
 function fmtDate(d) { return new Date(d).toISOString().split('T')[0]; }
 function timeAgo(ts) {
@@ -608,7 +562,6 @@ function catEmoji(cat) {
   return m[cat] || '📦';
 }
 
-// SHA-256 for password hashing (no bcrypt in browser without libs)
 async function sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -628,9 +581,6 @@ function setBusy(busy, btnId) {
   else btn.textContent = btn.dataset.orig || btn.textContent;
 }
 
-// ════════════════════════════════════════════════════════════
-//  ROUTER
-// ════════════════════════════════════════════════════════════
 let currentStaffTab = 'notifications';
 let itemsFilter = 'all';
 
@@ -643,21 +593,17 @@ function navTo(page, params = {}) {
 }
 
 async function checkRoute() {
-  // 1. Check for QR scan hash (no login required)
   const hash = location.hash.replace('#', '');
   if (hash.startsWith('scan/')) {
     navTo('scan', { qrId: decodeURIComponent(hash.replace('scan/', '')) });
     return;
   }
 
-  // 2. Resume existing session
   const sess = getSession();
   if (sess) {
     navTo(sess.role === 'staff' ? 'staff' : 'student');
     return;
   }
-
-  // 3. Default: login page
   navTo('login');
 }
 
@@ -666,9 +612,6 @@ window.addEventListener('hashchange', () => {
   if (hash.startsWith('scan/')) navTo('scan', { qrId: decodeURIComponent(hash.replace('scan/', '')) });
 });
 
-// ════════════════════════════════════════════════════════════
-//  AUTH
-// ════════════════════════════════════════════════════════════
 function toggleLoginFields() {
   const role = document.getElementById('login-role').value;
   document.getElementById('login-staff-fields').style.display   = role === 'staff'   ? '' : 'none';
@@ -717,9 +660,6 @@ function doLogout() {
 document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 document.getElementById('login-lrn').addEventListener('keydown',  e => { if (e.key === 'Enter') doLogin(); });
 
-// ════════════════════════════════════════════════════════════
-//  STAFF PORTAL
-// ════════════════════════════════════════════════════════════
 function renderStaffPage() {
   const sess = getSession();
   if (!sess) return;
@@ -744,7 +684,6 @@ function staffTab(tab) {
   if (tab === 'settings')      loadSettings();
 }
 
-// ── NOTIFICATIONS TAB ─────────────────────────────────────
 async function renderStaffNotifs() {
   document.getElementById('staff-stats').innerHTML =
     `<div class="stat"><div class="stat-val">…</div><div class="stat-label">Total</div></div>`.repeat(3);
@@ -778,7 +717,6 @@ async function renderStaffNotifs() {
     </div>`).join('') + '</div>';
 }
 
-// ── STUDENTS TAB ──────────────────────────────────────────
 async function renderStudentList() {
   const q = document.getElementById('student-search')?.value || '';
   const el = document.getElementById('student-list');
@@ -801,7 +739,6 @@ async function renderStudentList() {
     </div>`).join('') + '</div>';
 }
 
-// ── ITEMS LOG TAB ─────────────────────────────────────────
 async function renderItemsLog() {
   const el = document.getElementById('items-log-list');
   el.innerHTML = loadingHTML();
@@ -826,7 +763,6 @@ function filterItems(f, el) {
   renderItemsLog();
 }
 
-// ── QR SHEET TAB ──────────────────────────────────────────
 async function renderQRSheet() {
   const el = document.getElementById('qr-sheet-grid');
   el.innerHTML = loadingHTML();
@@ -864,7 +800,6 @@ async function renderQRSheet() {
   });
 }
 
-// ── SETTINGS TAB ──────────────────────────────────────────
 async function loadSettings() {
   const { data: s } = await DB.getSettings();
   if (!s) return;
@@ -898,9 +833,6 @@ async function addStaffAccount() {
   showToast('✅ Staff account added');
 }
 
-// ════════════════════════════════════════════════════════════
-//  STUDENT MANAGEMENT
-// ════════════════════════════════════════════════════════════
 function openAddStudentModal() {
   ['ns-name','ns-lrn','ns-section','ns-qr','ns-contact'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('ns-grade').value = '';
@@ -985,9 +917,6 @@ async function deleteStudent(lrn) {
   showToast('🗑️ Student removed');
 }
 
-// ════════════════════════════════════════════════════════════
-//  REPORT DETAIL MODAL (staff)
-// ════════════════════════════════════════════════════════════
 async function openReportDetail(id) {
   openModal('modal-detail');
   document.getElementById('mdl-title').textContent = 'Loading…';
@@ -1036,9 +965,6 @@ async function deleteReport(id) {
   showToast('🗑️ Report deleted');
 }
 
-// ════════════════════════════════════════════════════════════
-//  SCAN PAGE (public)
-// ════════════════════════════════════════════════════════════
 async function renderScanPage(qrId) {
   const el = document.getElementById('scan-content');
   el.innerHTML = loadingHTML();
@@ -1158,9 +1084,6 @@ async function submitReport(lrn, qrId) {
   showToast('✅ Report submitted!');
 }
 
-// ════════════════════════════════════════════════════════════
-//  STUDENT DASHBOARD
-// ════════════════════════════════════════════════════════════
 async function renderStudentPage() {
   const sess = getSession();
   if (!sess || sess.role !== 'student') return;
@@ -1210,7 +1133,6 @@ async function renderStudentPage() {
       </div>
     </div>`).join('') + '</div>';
 
-  // Mark all as read async (fire and forget — no need to await UI)
   if (unread > 0) DB.markStudentReportsRead(sess.lrn);
 }
 
@@ -1240,9 +1162,6 @@ async function openStudentNotif(id, office) {
   document.getElementById('mdl-actions').innerHTML = `<button class="btn" onclick="closeModal('modal-detail')">Close</button>`;
 }
 
-// ════════════════════════════════════════════════════════════
-//  CSV IMPORT / EXPORT
-// ════════════════════════════════════════════════════════════
 async function exportCSV() {
   const { data: students } = await DB.getStudents();
   if (!students?.length) { showToast('No students to export'); return; }
@@ -1260,7 +1179,7 @@ async function importCSV(input) {
   const file = input.files[0];
   if (!file) return;
   const text = await file.text();
-  const lines = text.split('\n').slice(1); // skip header
+  const lines = text.split('\n').slice(1);
   const rows = [];
   lines.forEach(line => {
     if (!line.trim()) return;
@@ -1277,9 +1196,6 @@ async function importCSV(input) {
   input.value = '';
 }
 
-// ════════════════════════════════════════════════════════════
-//  UI HELPERS
-// ════════════════════════════════════════════════════════════
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-bg').forEach(bg =>
@@ -1294,15 +1210,11 @@ function showToast(msg) {
   _toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
 }
 
-// XSS-safe string escaping for inline HTML
 function esc(str) {
   if (str == null) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
 }
 
-// ════════════════════════════════════════════════════════════
-//  BOOT
-// ════════════════════════════════════════════════════════════
 checkRoute();
 </script>
 </body>
