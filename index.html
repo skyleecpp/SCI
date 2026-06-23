@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SchoolFind — Lost & Found</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root {
+  --bg:#f5f4f0; --surface:#fff; --surface2:#f0efe9;
+  --border:rgba(0,0,0,.10); --border2:rgba(0,0,0,.18);
+  --text:#1a1a18; --text2:#5a5a54; --text3:#9a9990;
+  --blue:#1a5fb4; --blue-bg:#e8f0fb; --blue-text:#1a4a8a;
+  --green:#2d6a2d; --green-bg:#e8f5e8; --green-text:#1e5c1e;
+  --amber:#a05c00; --amber-bg:#fdf3e0; --amber-text:#7a4500;
+  --red:#c0392b; --red-bg:#fdecea; --red-text:#9c2a1f;
+  --radius:10px; --radius-lg:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;min-height:100vh}
+
+/* ROUTER */
+.page{display:none;min-height:100vh}
+.page.active{display:flex;flex-direction:column}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.topbar-brand{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600;color:var(--text);text-decoration:none;cursor:pointer}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;user-select:none}
+
+/* NAV TABS */
+.nav-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{flex:1;min-width:80px;padding:12px 8px;font-size:12px;font-weight:500;color:var(--text2);border:none;background:none;cursor:pointer;border-bottom:2.5px solid transparent;transition:all .15s;white-space:nowrap}
+.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.nav-tab:hover:not(.active){color:var(--text);background:var(--bg)}
+
+/* CONTENT */
+.content{flex:1;padding:16px;max-width:680px;width:100%;margin:0 auto}
+.content.wide{max-width:100%;padding:0}
+
+/* CARDS */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:16px;margin-bottom:12px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center}
+.stat-val{font-size:26px;font-weight:700;line-height:1;margin-bottom:4px}
+.stat-label{font-size:11px;color:var(--text2)}
+
+/* PILLS */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.pill-blue{background:var(--blue-bg);color:var(--blue-text)}
+.pill-green{background:var(--green-bg);color:var(--green-text)}
+.pill-amber{background:var(--amber-bg);color:var(--amber-text)}
+.pill-gray{background:var(--surface2);color:var(--text2)}
+
+/* ITEM ROWS */
+.item-row{display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--surface);border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+.item-row:first-child{border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.item-row:last-child{border-bottom:none;border-radius:0 0 var(--radius-lg) var(--radius-lg)}
+.item-row:only-child{border-radius:var(--radius-lg)}
+.item-row:hover{background:var(--bg)}
+.item-emoji{font-size:22px;width:40px;height:40px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.item-meta{flex:1;min-width:0}
+.item-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-sub{font-size:12px;color:var(--text2)}
+.item-list-wrap{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+
+/* FORMS */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px;letter-spacing:.02em}
+.form-input{width:100%;padding:10px 12px;font-size:14px;border:1.5px solid var(--border2);border-radius:8px;background:var(--surface);color:var(--text);font-family:inherit;transition:border-color .15s}
+.form-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,95,180,.12)}
+textarea.form-input{min-height:80px;resize:vertical}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.form-row{grid-template-columns:1fr}}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5a54' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);font-family:inherit;transition:all .15s}
+.btn:hover{background:var(--surface2)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--blue);color:#fff;border-color:transparent}
+.btn-primary:hover{background:#154d96}
+.btn-success{background:var(--green);color:#fff;border-color:transparent}
+.btn-success:hover{background:#235223}
+.btn-danger{background:var(--red);color:#fff;border-color:transparent}
+.btn-full{width:100%}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:7px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+
+/* NOTIFICATIONS */
+.notif{display:flex;gap:12px;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);cursor:pointer}
+.notif:first-child{border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.notif:last-child{border-bottom:none;border-radius:0 0 var(--radius-lg) var(--radius-lg)}
+.notif:only-child{border-radius:var(--radius-lg)}
+.notif.unread{background:var(--blue-bg)}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);margin-top:6px;flex-shrink:0}
+.notif-dot.read{background:transparent;border:1.5px solid var(--border2)}
+.notif-body{flex:1;min-width:0}
+.notif-title{font-size:14px;font-weight:500;margin-bottom:2px}
+.notif-sub{font-size:12px;color:var(--text2);line-height:1.5}
+.notif-time{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* QR SHEET */
+.qr-grid-layout{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:16px}
+.qr-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.qr-label{font-size:11px;font-weight:600;color:var(--text2);text-align:center;font-family:monospace}
+.qr-student{font-size:13px;font-weight:500;text-align:center}
+.qr-grade{font-size:11px;color:var(--text2);text-align:center}
+
+/* SCAN PAGE */
+.scan-hero{background:linear-gradient(135deg,#1a5fb4,#1a3f7a);color:#fff;padding:32px 20px 24px;text-align:center}
+.scan-hero-icon{font-size:48px;margin-bottom:8px}
+.scan-hero-title{font-size:22px;font-weight:700;margin-bottom:4px}
+.scan-hero-sub{font-size:14px;opacity:.75}
+.scan-body{padding:20px 16px;max-width:500px;margin:0 auto}
+.scan-student-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:16px}
+.scan-avatar-big{width:56px;height:56px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0}
+.scan-name{font-size:18px;font-weight:700}
+.scan-grade{font-size:13px;color:var(--text2);margin-top:2px}
+.privacy-strip{background:var(--amber-bg);border:1px solid #e8c97a;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--amber-text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.report-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px}
+.report-section h3{font-size:14px;font-weight:600;margin-bottom:14px;color:var(--text2)}
+
+/* LOGIN */
+.login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:var(--bg)}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:380px}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .logo-icon{font-size:40px}
+.login-logo h1{font-size:20px;font-weight:700;margin-top:8px}
+.login-logo p{font-size:13px;color:var(--text2);margin-top:4px}
+
+/* SETUP / CONFIG GATE */
+.setup-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:var(--bg)}
+.setup-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:480px}
+.setup-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;font-size:13px;color:var(--text2);line-height:1.6}
+.setup-num{width:22px;height:22px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:2px}
+code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:12px}
+
+/* EMPTY STATES */
+.empty{text-align:center;padding:48px 24px;color:var(--text2)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-title{font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.empty-sub{font-size:13px;line-height:1.6}
+
+/* LOADING SPINNER */
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+.loading-center{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;gap:12px;color:var(--text2);font-size:13px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#1a1a18;color:#fff;padding:12px 20px;border-radius:100px;font-size:13px;font-weight:500;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;pointer-events:none;white-space:nowrap;max-width:calc(100vw - 32px)}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:16px}
+
+/* MISC */
+.section-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;margin-top:20px}
+.section-label:first-child{margin-top:0}
+.info-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;gap:12px}
+.info-row:last-child{border-bottom:none}
+.info-key{color:var(--text2);flex-shrink:0;font-size:13px}
+.info-val{font-weight:500;text-align:right;word-break:break-word}
+.unread-count{background:var(--red);color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.search-bar{display:flex;gap:8px;margin-bottom:14px}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border2);background:var(--surface);color:var(--text2);transition:all .12s}
+.chip.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+
+@media print{
+  .no-print{display:none!important}
+  body{background:white}
+  .qr-card{border:1px solid #ccc;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     CONFIG GATE — shown when Supabase isn't set up
+     ════════════════════════════════════════════ -->
+<div id="page-setup" class="page active">
+  <div class="setup-wrap">
+    <div class="setup-card">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:40px">🏫</div>
+        <h1 style="font-size:20px;font-weight:700;margin-top:8px">SchoolFind Setup</h1>
+        <p style="font-size:13px;color:var(--text2);margin-top:4px">Connect your Supabase database to continue</p>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:20px">
+        <div class="setup-step"><div class="setup-num">1</div><div>Create a free project at <strong>supabase.com</strong></div></div>
+        <div class="setup-step"><div class="setup-num">2</div><div>In <strong>SQL Editor</strong>, run the contents of <code>supabase_schema.sql</code> (included with this file)</div></div>
+        <div class="setup-step"><div class="setup-num">3</div><div>Copy your <strong>Project URL</strong> and <strong>anon public key</strong> from Project Settings → API, then paste below</div></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Supabase Project URL</label>
+        <input type="text" class="form-input" id="cfg-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Supabase Anon Key</label>
+        <input type="text" class="form-input" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="initSupabase()">Connect & continue</button>
+      <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:12px">These credentials are stored only in your browser's localStorage and are never sent anywhere else.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PAGE: LOGIN
+     ════════════════════════════════════════════ -->
+<div id="page-login" class="page">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="logo-icon">🏫</div>
+        <h1>SchoolFind</h1>
+        <p>Lost & Found Management System</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sign in as</label>
+        <select class="form-input" id="login-role" onchange="toggleLoginFields()">
+          <option value="staff">Staff / Administrator</option>
+          <option value="student">Student / Parent</option>
+        </select>
+      </div>
+      <div id="login-staff-fields">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" class="form-input" id="login-user" placeholder="Username" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+        </div>
+      </div>
+      <div id="login-student-fields" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Learner Reference Number (LRN)</label>
+          <input type="text" class="form-input" id="login-lrn" placeholder="12-digit LRN" maxlength="12" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last name (verification)</label>
+          <input type="text" class="form-input" id="login-lastname" placeholder="Your last name">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()">Sign in</button>
+      <p style="font-size:12px;color:var(--text3);text-align:center;margin-top:16px">
+        Default staff: <code style="font-size:11px">admin</code> / <code style="font-size:11px">admin123</code>
+      </p>
+      <button class="btn btn-sm" style="margin-top:10px;width:100%;font-size:11px;color:var(--text3)" onclick="resetConfig()">⚙️ Change Supabase connection</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PAGE: STAFF PORTAL
+     ════════════════════════════════════════════ -->
+<div id="page-staff" class="page">
+  <div class="topbar no-print">
+    <span class="topbar-brand" onclick="navTo('staff')"><span>🏫</span> SchoolFind</span>
+    <div class="topbar-right">
+      <span style="font-size:12px;color:var(--text2)" id="staff-name-label"></span>
+      <div class="avatar" id="staff-avatar" onclick="doLogout()" title="Sign out">?</div>
+    </div>
+  </div>
+  <div class="nav-tabs no-print">
+    <button class="nav-tab active" onclick="staffTab('notifications')">Notifications</button>
+    <button class="nav-tab" onclick="staffTab('students')">Students</button>
+    <button class="nav-tab" onclick="staffTab('items')">Items Log</button>
+    <button class="nav-tab" onclick="staffTab('qr-sheet')">QR Sheet</button>
+    <button class="nav-tab" onclick="staffTab('settings')">Settings</button>
+  </div>
+
+  <div id="staff-tab-notifications" class="content">
+    <div class="stats" id="staff-stats"></div>
+    <div class="section-label">Recent reports</div>
+    <div id="staff-notif-list"></div>
+  </div>
+
+  <div id="staff-tab-students" class="content" style="display:none">
+    <div class="search-bar">
+      <input type="text" class="form-input" id="student-search" placeholder="Search name, LRN, grade…" oninput="renderStudentList()">
+    </div>
+    <div class="section-label" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Students</span>
+      <button class="btn btn-sm btn-primary" onclick="openAddStudentModal()">+ Add student</button>
+    </div>
+    <div id="student-list"></div>
+  </div>
+
+  <div id="staff-tab-items" class="content" style="display:none">
+    <div class="chip-row" id="items-filter-chips">
+      <span class="chip active" onclick="filterItems('all',this)">All</span>
+      <span class="chip" onclick="filterItems('unclaimed',this)">Unclaimed</span>
+      <span class="chip" onclick="filterItems('claimed',this)">Claimed</span>
+    </div>
+    <div id="items-log-list"></div>
+  </div>
+
+  <div id="staff-tab-qr-sheet" class="content wide">
+    <div class="no-print" style="padding:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--surface)">
+      <span style="font-size:14px;font-weight:500">QR Code Sheet</span>
+      <span style="font-size:13px;color:var(--text2)">One QR per student — print and laminate</span>
+      <button class="btn btn-sm btn-primary" style="margin-left:auto" onclick="window.print()">🖨️ Print all</button>
+    </div>
+    <div class="qr-grid-layout" id="qr-sheet-grid"></div>
+  </div>
+
+  <div id="staff-tab-settings" class="content" style="display:none">
+    <div class="card">
+      <div class="card-title">⚙️ School settings</div>
+      <div class="form-group">
+        <label class="form-label">School name</label>
+        <input type="text" class="form-input" id="setting-school" placeholder="e.g. Bagong Silangan National High School">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lost & Found office location</label>
+        <input type="text" class="form-input" id="setting-office" placeholder="e.g. Guidance Office, Room 101">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Base URL for QR codes</label>
+        <input type="text" class="form-input" id="setting-url" placeholder="https://yourschool.github.io/schoolfind">
+        <p style="font-size:11px;color:var(--text3);margin-top:4px">Where this file is hosted. QR codes will link to: [Base URL]#scan/QR-001</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveSettings()">Save settings</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">👤 Add staff account</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" class="form-input" id="new-staff-user" placeholder="mreyes">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full name</label>
+          <input type="text" class="form-input" id="new-staff-name" placeholder="Maria Reyes">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="new-staff-pass" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" onclick="addStaffAccount()">Add staff</button>
+    </div>
+    <div class="card">
+      <div class="card-title">🗄️ Data management</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Import a CSV roster to bulk-add students. Export for backup.</p>
+      <div class="btn-row">
+        <button class="btn" onclick="exportCSV()">⬇️ Export students CSV</button>
+        <label class="btn" style="cursor:pointer">⬆️ Import CSV
+          <input type="file" accept=".csv" style="display:none" onchange="importCSV(this)">
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PAGE: SCAN (public — no login needed)
+     ════════════════════════════════════════════ -->
+<div id="page-scan" class="page">
+  <div class="topbar no-print">
+    <span class="topbar-brand" onclick="navTo('login')"><span>🏫</span> SchoolFind</span>
+    <div class="topbar-right">
+      <button class="btn btn-sm" onclick="navTo('login')">Staff login</button>
+    </div>
+  </div>
+  <div id="scan-content"></div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PAGE: STUDENT DASHBOARD
+     ════════════════════════════════════════════ -->
+<div id="page-student" class="page">
+  <div class="topbar">
+    <span class="topbar-brand"><span>🏫</span> SchoolFind</span>
+    <div class="topbar-right">
+      <div class="avatar" id="student-avatar">?</div>
+      <div class="avatar" onclick="doLogout()" title="Sign out" style="background:var(--surface2);color:var(--text2)">↩</div>
+    </div>
+  </div>
+  <div class="content">
+    <div id="student-greeting" style="margin-bottom:16px"></div>
+    <div class="section-label" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Your notifications</span>
+      <span class="unread-count" id="student-unread-badge" style="display:none"></span>
+    </div>
+    <div id="student-notif-list"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MODAL: ADD STUDENT
+     ════════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-add-student">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add student</div>
+    <div class="form-group">
+      <label class="form-label">Full name</label>
+      <input type="text" class="form-input" id="ns-name" placeholder="Juan dela Cruz">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">LRN (12 digits)</label>
+        <input type="text" class="form-input" id="ns-lrn" placeholder="123456789012" maxlength="12" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Grade level</label>
+        <select class="form-input" id="ns-grade">
+          <option value="">Select</option>
+          <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option>
+          <option>Grade 4</option><option>Grade 5</option><option>Grade 6</option>
+          <option>Grade 7</option><option>Grade 8</option><option>Grade 9</option>
+          <option>Grade 10</option><option>Grade 11</option><option>Grade 12</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Section</label>
+        <input type="text" class="form-input" id="ns-section" placeholder="Masipag">
+      </div>
+      <div class="form-group">
+        <label class="form-label">QR Code ID (pre-printed label)</label>
+        <input type="text" class="form-input" id="ns-qr" placeholder="QR-001">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Guardian contact (staff-only)</label>
+      <input type="text" class="form-input" id="ns-contact" placeholder="+63 912 345 6789">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-save-student" onclick="saveNewStudent()">Save student</button>
+      <button class="btn" onclick="closeModal('modal-add-student')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MODAL: ITEM / STUDENT DETAIL
+     ════════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-detail">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="mdl-title">Details</div>
+    <div id="mdl-content"></div>
+    <div class="btn-row" id="mdl-actions"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  CONFIG — stored in localStorage so the HTML file itself
+//  needs no editing after initial setup via the config gate.
+// ════════════════════════════════════════════════════════════
+const CFG_KEY = 'sf_supabase_cfg';
+
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem(CFG_KEY)); } catch { return null; }
+}
+function saveConfig(url, key) {
+  localStorage.setItem(CFG_KEY, JSON.stringify({ url, key }));
+}
+function resetConfig() {
+  localStorage.removeItem(CFG_KEY);
+  navTo('setup');
+}
+
+// ════════════════════════════════════════════════════════════
+//  SUPABASE CLIENT — initialised once, reused everywhere
+// ════════════════════════════════════════════════════════════
+let SB = null; // Supabase client
+
+async function initSupabase(urlArg, keyArg) {
+  const url = urlArg || document.getElementById('cfg-url')?.value.trim();
+  const key = keyArg || document.getElementById('cfg-key')?.value.trim();
+  if (!url || !key) { showToast('❌ Enter both URL and key'); return; }
+
+  setBusy(true, 'login-btn');
+  try {
+    SB = window.supabase.createClient(url, key);
+    // Verify connection with a lightweight query
+    const { error } = await SB.from('settings').select('id').limit(1);
+    if (error) throw error;
+    saveConfig(url, key);
+    setBusy(false, 'login-btn');
+    checkRoute();
+  } catch (e) {
+    setBusy(false, 'login-btn');
+    SB = null;
+    showToast('❌ Connection failed: ' + (e.message || 'check URL and key'));
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  DATABASE ABSTRACTION LAYER
+//  All methods return { data, error } like Supabase does.
+//  Every caller awaits these — no sync data access anywhere.
+// ════════════════════════════════════════════════════════════
+const DB = {
+
+  // ── SETTINGS ──────────────────────────────────────────────
+  async getSettings() {
+    const { data, error } = await SB.from('settings').select('*').eq('id', 1).single();
+    return { data, error };
+  },
+  async saveSettings(patch) {
+    const { data, error } = await SB.from('settings').update(patch).eq('id', 1).select().single();
+    return { data, error };
+  },
+
+  // ── STAFF ─────────────────────────────────────────────────
+  async getStaffByUsername(username) {
+    const { data, error } = await SB.from('staff')
+      .select('id,username,pass_hash,full_name,role')
+      .eq('username', username)
+      .single();
+    return { data, error };
+  },
+  async addStaff(username, passHash, fullName) {
+    const { data, error } = await SB.from('staff')
+      .insert({ username, pass_hash: passHash, full_name: fullName, role: 'clerk' })
+      .select().single();
+    return { data, error };
+  },
+
+  // ── STUDENTS ──────────────────────────────────────────────
+  async getStudents(search) {
+    let q = SB.from('students').select('lrn,full_name,grade,section,qr_id,contact').order('full_name');
+    if (search) {
+      q = q.or(`full_name.ilike.%${search}%,lrn.ilike.%${search}%,grade.ilike.%${search}%,section.ilike.%${search}%`);
+    }
+    return await q;
+  },
+  async getStudentByQR(qrId) {
+    // Public scan: only return name and grade (no contact, no LRN)
+    const { data, error } = await SB.from('students')
+      .select('lrn,full_name,grade,section')
+      .eq('qr_id', qrId)
+      .single();
+    return { data, error };
+  },
+  async getStudentByLRN(lrn) {
+    const { data, error } = await SB.from('students')
+      .select('lrn,full_name,grade,section,qr_id,contact')
+      .eq('lrn', lrn)
+      .single();
+    return { data, error };
+  },
+  async addStudent(student) {
+    const { data, error } = await SB.from('students')
+      .insert({
+        lrn: student.lrn,
+        full_name: student.name,
+        grade: student.grade,
+        section: student.section || null,
+        qr_id: student.qrId || null,
+        contact: student.contact || null
+      }).select().single();
+    return { data, error };
+  },
+  async deleteStudent(lrn) {
+    return await SB.from('students').delete().eq('lrn', lrn);
+  },
+  async getAllStudentsForQR() {
+    return await SB.from('students')
+      .select('lrn,full_name,grade,section,qr_id')
+      .not('qr_id', 'is', null)
+      .order('qr_id');
+  },
+  async importStudents(rows) {
+    // Upsert so re-importing doesn't duplicate
+    return await SB.from('students').upsert(rows, { onConflict: 'lrn', ignoreDuplicates: true });
+  },
+
+  // ── ITEM REPORTS ──────────────────────────────────────────
+  async getReports(statusFilter) {
+    let q = SB.from('item_reports')
+      .select('id,qr_id,student_lrn,description,category,location,found_by,found_date,notes,status,read,created_at')
+      .order('created_at', { ascending: false });
+    if (statusFilter && statusFilter !== 'all') q = q.eq('status', statusFilter);
+    return await q;
+  },
+  async getReportsByStudent(lrn) {
+    return await SB.from('item_reports')
+      .select('*')
+      .eq('student_lrn', lrn)
+      .order('created_at', { ascending: false });
+  },
+  async getReportById(id) {
+    const { data, error } = await SB.from('item_reports').select('*').eq('id', id).single();
+    return { data, error };
+  },
+  async addReport(report) {
+    const { data, error } = await SB.from('item_reports')
+      .insert({
+        qr_id: report.qrId,
+        student_lrn: report.lrn,
+        description: report.desc,
+        category: report.category,
+        location: report.loc,
+        found_by: report.foundBy || 'Anonymous',
+        found_date: report.foundDate,
+        notes: report.notes || null,
+        status: 'unclaimed',
+        read: false
+      }).select().single();
+    return { data, error };
+  },
+  async updateReport(id, patch) {
+    const { data, error } = await SB.from('item_reports').update(patch).eq('id', id).select().single();
+    return { data, error };
+  },
+  async deleteReport(id) {
+    return await SB.from('item_reports').delete().eq('id', id);
+  },
+  async markStudentReportsRead(lrn) {
+    return await SB.from('item_reports').update({ read: true }).eq('student_lrn', lrn).eq('read', false);
+  },
+  async getReportStats() {
+    const { data, error } = await SB.from('item_reports').select('status');
+    if (error) return { total: 0, unclaimed: 0, claimed: 0 };
+    return {
+      total: data.length,
+      unclaimed: data.filter(r => r.status === 'unclaimed').length,
+      claimed: data.filter(r => r.status === 'claimed').length
+    };
+  }
+};
+
+// ════════════════════════════════════════════════════════════
+//  SESSION — still uses localStorage (it's only metadata,
+//  no student data, and expires on logout)
+// ════════════════════════════════════════════════════════════
+function getSession() { try { return JSON.parse(sessionStorage.getItem('sf_sess')); } catch { return null; } }
+function setSession(s) { sessionStorage.setItem('sf_sess', JSON.stringify(s)); }
+function clearSession() { sessionStorage.removeItem('sf_sess'); }
+
+// ════════════════════════════════════════════════════════════
+//  UTILITIES
+// ════════════════════════════════════════════════════════════
+function uid() { return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2); }
+function fmtDate(d) { return new Date(d).toISOString().split('T')[0]; }
+function timeAgo(ts) {
+  const s = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+function initials(name) {
+  if (!name) return '?';
+  return name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+}
+function catEmoji(cat) {
+  const m = { 'Bag / backpack':'🎒','Water bottle':'💧','Jacket / clothing':'🧥','Stationery':'✏️','Electronics':'📱','ID / card':'🪪','Shoes':'👟','Umbrella':'☂️','Food / container':'🍱','Other':'📦' };
+  return m[cat] || '📦';
+}
+
+// SHA-256 for password hashing (no bcrypt in browser without libs)
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function emptyHTML(icon, title, sub) {
+  return `<div class="empty"><div class="empty-icon">${icon}</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div></div>`;
+}
+function loadingHTML() {
+  return `<div class="loading-center"><div class="spinner"></div><span>Loading…</span></div>`;
+}
+function setBusy(busy, btnId) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = busy;
+  if (busy) btn.dataset.orig = btn.textContent, btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px"></div>';
+  else btn.textContent = btn.dataset.orig || btn.textContent;
+}
+
+// ════════════════════════════════════════════════════════════
+//  ROUTER
+// ════════════════════════════════════════════════════════════
+let currentStaffTab = 'notifications';
+let itemsFilter = 'all';
+
+function navTo(page, params = {}) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if (page === 'staff')   renderStaffPage();
+  if (page === 'student') renderStudentPage();
+  if (page === 'scan' && params.qrId) renderScanPage(params.qrId);
+}
+
+async function checkRoute() {
+  // 1. Check if Supabase is configured
+  const cfg = loadConfig();
+  if (!cfg) { navTo('setup'); return; }
+
+  // 2. Init Supabase client from saved config
+  if (!SB) {
+    SB = window.supabase.createClient(cfg.url, cfg.key);
+    // Quiet verify — if it fails, show setup
+    try {
+      const { error } = await SB.from('settings').select('id').limit(1);
+      if (error) throw error;
+    } catch {
+      SB = null;
+      navTo('setup');
+      return;
+    }
+  }
+
+  // 3. Check for QR scan hash
+  const hash = location.hash.replace('#', '');
+  if (hash.startsWith('scan/')) {
+    navTo('scan', { qrId: decodeURIComponent(hash.replace('scan/', '')) });
+    return;
+  }
+
+  // 4. Check existing session
+  const sess = getSession();
+  if (sess) {
+    navTo(sess.role === 'staff' ? 'staff' : 'student');
+    return;
+  }
+
+  navTo('login');
+}
+
+window.addEventListener('hashchange', () => {
+  const hash = location.hash.replace('#', '');
+  if (hash.startsWith('scan/')) navTo('scan', { qrId: decodeURIComponent(hash.replace('scan/', '')) });
+});
+
+// ════════════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════════════
+function toggleLoginFields() {
+  const role = document.getElementById('login-role').value;
+  document.getElementById('login-staff-fields').style.display   = role === 'staff'   ? '' : 'none';
+  document.getElementById('login-student-fields').style.display = role === 'student' ? '' : 'none';
+}
+
+async function doLogin() {
+  const role = document.getElementById('login-role').value;
+  setBusy(true, 'login-btn');
+
+  if (role === 'staff') {
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value;
+    if (!user || !pass) { showToast('❌ Enter username and password'); setBusy(false,'login-btn'); return; }
+
+    const hash = await sha256(pass);
+    const { data: staff, error } = await DB.getStaffByUsername(user);
+    if (error || !staff || staff.pass_hash !== hash) {
+      showToast('❌ Invalid credentials'); setBusy(false, 'login-btn'); return;
+    }
+    setSession({ role: 'staff', user, name: staff.full_name, initials: initials(staff.full_name) });
+    setBusy(false, 'login-btn');
+    navTo('staff');
+
+  } else {
+    const lrn  = document.getElementById('login-lrn').value.trim();
+    const last = document.getElementById('login-lastname').value.trim().toLowerCase();
+    if (!lrn || !last) { showToast('❌ Enter LRN and last name'); setBusy(false,'login-btn'); return; }
+
+    const { data: s, error } = await DB.getStudentByLRN(lrn);
+    if (error || !s) { showToast('❌ LRN not found'); setBusy(false, 'login-btn'); return; }
+    const lastName = s.full_name.trim().split(/\s+/).pop().toLowerCase();
+    if (lastName !== last) { showToast('❌ Last name does not match'); setBusy(false, 'login-btn'); return; }
+
+    setSession({ role: 'student', lrn, name: s.full_name, initials: initials(s.full_name) });
+    setBusy(false, 'login-btn');
+    navTo('student');
+  }
+}
+
+function doLogout() {
+  clearSession();
+  navTo('login');
+}
+
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('login-lrn').addEventListener('keydown',  e => { if (e.key === 'Enter') doLogin(); });
+
+// ════════════════════════════════════════════════════════════
+//  STAFF PORTAL
+// ════════════════════════════════════════════════════════════
+function renderStaffPage() {
+  const sess = getSession();
+  if (!sess) return;
+  document.getElementById('staff-name-label').textContent = sess.name;
+  document.getElementById('staff-avatar').textContent     = sess.initials;
+  staffTab(currentStaffTab);
+}
+
+function staffTab(tab) {
+  currentStaffTab = tab;
+  const tabs = ['notifications','students','items','qr-sheet','settings'];
+  document.querySelectorAll('.nav-tab').forEach((el, i) =>
+    el.classList.toggle('active', tabs[i] === tab));
+  tabs.forEach(t => {
+    const el = document.getElementById('staff-tab-' + t);
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
+  if (tab === 'notifications') renderStaffNotifs();
+  if (tab === 'students')      renderStudentList();
+  if (tab === 'items')         renderItemsLog();
+  if (tab === 'qr-sheet')      renderQRSheet();
+  if (tab === 'settings')      loadSettings();
+}
+
+// ── NOTIFICATIONS TAB ─────────────────────────────────────
+async function renderStaffNotifs() {
+  document.getElementById('staff-stats').innerHTML =
+    `<div class="stat"><div class="stat-val">…</div><div class="stat-label">Total</div></div>`.repeat(3);
+  document.getElementById('staff-notif-list').innerHTML = loadingHTML();
+
+  const [stats, { data: reports, error }] = await Promise.all([
+    DB.getReportStats(),
+    DB.getReports()
+  ]);
+
+  document.getElementById('staff-stats').innerHTML = `
+    <div class="stat"><div class="stat-val" style="color:var(--blue)">${stats.total}</div><div class="stat-label">Total reports</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--amber)">${stats.unclaimed}</div><div class="stat-label">Unclaimed</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--green)">${stats.claimed}</div><div class="stat-label">Claimed</div></div>`;
+
+  const el = document.getElementById('staff-notif-list');
+  if (error) { el.innerHTML = emptyHTML('⚠️','Error loading reports', error.message); return; }
+  if (!reports?.length) { el.innerHTML = emptyHTML('📭','No reports yet','When a scanner submits a found-item report, it will appear here.'); return; }
+
+  el.innerHTML = '<div class="item-list-wrap">' + reports.map(r => `
+    <div class="item-row" onclick="openReportDetail('${r.id}')">
+      <div class="item-emoji">${catEmoji(r.category)}</div>
+      <div class="item-meta">
+        <div class="item-name">${esc(r.description)}</div>
+        <div class="item-sub">${esc(r.student_lrn)} · ${esc(r.location)} · ${r.found_date}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <span class="pill ${r.status==='unclaimed'?'pill-amber':'pill-green'}">${r.status}</span>
+        <span style="font-size:11px;color:var(--text3)">${timeAgo(r.created_at)}</span>
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+// ── STUDENTS TAB ──────────────────────────────────────────
+async function renderStudentList() {
+  const q = document.getElementById('student-search')?.value || '';
+  const el = document.getElementById('student-list');
+  el.innerHTML = loadingHTML();
+
+  const { data: students, error } = await DB.getStudents(q);
+  if (error) { el.innerHTML = emptyHTML('⚠️','Error', error.message); return; }
+  if (!students?.length) {
+    el.innerHTML = emptyHTML('👤', q ? 'No results' : 'No students yet', q ? 'Try a different search.' : 'Add students to get started.');
+    return;
+  }
+  el.innerHTML = '<div class="item-list-wrap">' + students.map(s => `
+    <div class="item-row" onclick="openStudentDetail('${esc(s.lrn)}')">
+      <div class="avatar" style="width:40px;height:40px;font-size:14px;flex-shrink:0">${initials(s.full_name)}</div>
+      <div class="item-meta">
+        <div class="item-name">${esc(s.full_name)}</div>
+        <div class="item-sub">${s.lrn} · ${s.grade}${s.section?' · '+esc(s.section):''} · QR: <strong>${s.qr_id||'unassigned'}</strong></div>
+      </div>
+      <span class="pill pill-gray" style="font-family:monospace;font-size:11px">${s.qr_id||'—'}</span>
+    </div>`).join('') + '</div>';
+}
+
+// ── ITEMS LOG TAB ─────────────────────────────────────────
+async function renderItemsLog() {
+  const el = document.getElementById('items-log-list');
+  el.innerHTML = loadingHTML();
+  const { data: items, error } = await DB.getReports(itemsFilter);
+  if (error) { el.innerHTML = emptyHTML('⚠️','Error', error.message); return; }
+  if (!items?.length) { el.innerHTML = emptyHTML('📦','No items','No items match this filter.'); return; }
+  el.innerHTML = '<div class="item-list-wrap">' + items.map(r => `
+    <div class="item-row" onclick="openReportDetail('${r.id}')">
+      <div class="item-emoji">${catEmoji(r.category)}</div>
+      <div class="item-meta">
+        <div class="item-name">${esc(r.description)} <span style="font-size:11px;color:var(--text3);font-family:monospace">${r.qr_id}</span></div>
+        <div class="item-sub">${r.student_lrn} · Found by ${esc(r.found_by)} · ${r.found_date}</div>
+      </div>
+      <span class="pill ${r.status==='unclaimed'?'pill-amber':'pill-green'}">${r.status}</span>
+    </div>`).join('') + '</div>';
+}
+
+function filterItems(f, el) {
+  itemsFilter = f;
+  document.querySelectorAll('#items-filter-chips .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderItemsLog();
+}
+
+// ── QR SHEET TAB ──────────────────────────────────────────
+async function renderQRSheet() {
+  const el = document.getElementById('qr-sheet-grid');
+  el.innerHTML = loadingHTML();
+
+  const [{ data: students, error }, { data: cfg }] = await Promise.all([
+    DB.getAllStudentsForQR(),
+    DB.getSettings()
+  ]);
+
+  if (error) { el.innerHTML = emptyHTML('⚠️','Error', error.message); return; }
+  if (!students?.length) {
+    el.innerHTML = emptyHTML('🔲','No students yet','Add students with QR IDs first.');
+    return;
+  }
+
+  const baseUrl = (cfg?.base_url || location.origin + location.pathname).replace(/\/$/, '');
+  el.innerHTML = '';
+
+  students.forEach(s => {
+    const scanUrl = baseUrl + '#scan/' + encodeURIComponent(s.qr_id);
+    const safeId  = 'qr_' + s.qr_id.replace(/[^a-z0-9]/gi, '_');
+    const div = document.createElement('div');
+    div.className = 'qr-card';
+    div.innerHTML = `<div id="${safeId}"></div>
+      <div class="qr-label">${esc(s.qr_id)}</div>
+      <div class="qr-student">${esc(s.full_name)}</div>
+      <div class="qr-grade">${esc(s.grade)}${s.section?' · '+esc(s.section):''}</div>`;
+    el.appendChild(div);
+    setTimeout(() => {
+      const container = document.getElementById(safeId);
+      if (container && typeof QRCode !== 'undefined') {
+        new QRCode(container, { text: scanUrl, width: 120, height: 120, correctLevel: QRCode.CorrectLevel.M });
+      }
+    }, 50);
+  });
+}
+
+// ── SETTINGS TAB ──────────────────────────────────────────
+async function loadSettings() {
+  const { data: s } = await DB.getSettings();
+  if (!s) return;
+  document.getElementById('setting-school').value = s.school || '';
+  document.getElementById('setting-office').value = s.office || '';
+  document.getElementById('setting-url').value    = s.base_url || '';
+}
+
+async function saveSettings() {
+  const patch = {
+    school:    document.getElementById('setting-school').value.trim(),
+    office:    document.getElementById('setting-office').value.trim(),
+    base_url:  document.getElementById('setting-url').value.trim()
+  };
+  const { error } = await DB.saveSettings(patch);
+  if (error) { showToast('❌ ' + error.message); return; }
+  showToast('✅ Settings saved');
+}
+
+async function addStaffAccount() {
+  const user  = document.getElementById('new-staff-user').value.trim();
+  const name  = document.getElementById('new-staff-name').value.trim();
+  const pass  = document.getElementById('new-staff-pass').value;
+  if (!user || !name || !pass) { showToast('❌ All fields required'); return; }
+  const hash = await sha256(pass);
+  const { error } = await DB.addStaff(user, hash, name);
+  if (error) { showToast('❌ ' + (error.message.includes('unique') ? 'Username already exists' : error.message)); return; }
+  document.getElementById('new-staff-user').value = '';
+  document.getElementById('new-staff-name').value = '';
+  document.getElementById('new-staff-pass').value = '';
+  showToast('✅ Staff account added');
+}
+
+// ════════════════════════════════════════════════════════════
+//  STUDENT MANAGEMENT
+// ════════════════════════════════════════════════════════════
+function openAddStudentModal() {
+  ['ns-name','ns-lrn','ns-section','ns-qr','ns-contact'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ns-grade').value = '';
+  openModal('modal-add-student');
+}
+
+async function saveNewStudent() {
+  const name    = document.getElementById('ns-name').value.trim();
+  const lrn     = document.getElementById('ns-lrn').value.trim();
+  const grade   = document.getElementById('ns-grade').value;
+  const section = document.getElementById('ns-section').value.trim();
+  const qrId    = document.getElementById('ns-qr').value.trim().toUpperCase();
+  const contact = document.getElementById('ns-contact').value.trim();
+
+  if (!name || !lrn || !grade || !qrId) { showToast('❌ Name, LRN, grade and QR ID required'); return; }
+  if (lrn.length !== 12 || !/^\d+$/.test(lrn)) { showToast('❌ LRN must be exactly 12 digits'); return; }
+
+  setBusy(true, 'btn-save-student');
+  const { error } = await DB.addStudent({ lrn, name, grade, section, qrId, contact });
+  setBusy(false, 'btn-save-student');
+
+  if (error) {
+    const msg = error.message.includes('lrn') ? 'LRN already registered'
+              : error.message.includes('qr_id') ? 'QR ID already assigned to another student'
+              : error.message;
+    showToast('❌ ' + msg);
+    return;
+  }
+  closeModal('modal-add-student');
+  await renderStudentList();
+  showToast('✅ Student added — QR ' + qrId + ' → ' + name);
+}
+
+async function openStudentDetail(lrn) {
+  openModal('modal-detail');
+  document.getElementById('mdl-title').textContent = 'Loading…';
+  document.getElementById('mdl-content').innerHTML  = loadingHTML();
+  document.getElementById('mdl-actions').innerHTML  = '';
+
+  const [{ data: s }, { data: reports }] = await Promise.all([
+    DB.getStudentByLRN(lrn),
+    DB.getReportsByStudent(lrn)
+  ]);
+  const { data: cfg } = await DB.getSettings();
+  const baseUrl = (cfg?.base_url || location.origin + location.pathname).replace(/\/$/, '');
+  const scanUrl = baseUrl + '#scan/' + encodeURIComponent(s.qr_id);
+
+  document.getElementById('mdl-title').textContent = s.full_name;
+  document.getElementById('mdl-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <div class="avatar" style="width:48px;height:48px;font-size:18px">${initials(s.full_name)}</div>
+      <div>
+        <div style="font-size:16px;font-weight:600">${esc(s.full_name)}</div>
+        <div style="font-size:13px;color:var(--text2)">${esc(s.grade)}${s.section?' · '+esc(s.section):''}</div>
+      </div>
+      <span class="pill pill-blue" style="margin-left:auto;font-family:monospace">${s.qr_id||'—'}</span>
+    </div>
+    <div class="info-row"><span class="info-key">LRN</span><span class="info-val" style="font-family:monospace">${s.lrn}</span></div>
+    <div class="info-row"><span class="info-key">Guardian contact</span><span class="info-val">${esc(s.contact||'—')}</span></div>
+    <div class="info-row"><span class="info-key">QR scan URL</span><span class="info-val" style="font-size:11px;word-break:break-all;color:var(--blue)">${esc(scanUrl)}</span></div>
+    <div style="margin-top:16px;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">Item reports (${reports?.length||0})</div>
+    ${reports?.length ? reports.map(r => `
+      <div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span>${catEmoji(r.category)}</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">${esc(r.description)}</div>
+          <div style="font-size:11px;color:var(--text2)">${r.found_date} · ${esc(r.location)} · by ${esc(r.found_by)}</div>
+        </div>
+        <span class="pill ${r.status==='unclaimed'?'pill-amber':'pill-green'}">${r.status}</span>
+      </div>`).join('') : '<div style="font-size:13px;color:var(--text3)">No items reported yet</div>'}`;
+  document.getElementById('mdl-actions').innerHTML =
+    `<button class="btn btn-danger btn-sm" onclick="deleteStudent('${lrn}')">Delete student</button>
+     <button class="btn btn-sm" onclick="closeModal('modal-detail')">Close</button>`;
+}
+
+async function deleteStudent(lrn) {
+  if (!confirm('Delete this student? Their item reports will remain in the log.')) return;
+  const { error } = await DB.deleteStudent(lrn);
+  if (error) { showToast('❌ ' + error.message); return; }
+  closeModal('modal-detail');
+  await renderStudentList();
+  showToast('🗑️ Student removed');
+}
+
+// ════════════════════════════════════════════════════════════
+//  REPORT DETAIL MODAL (staff)
+// ════════════════════════════════════════════════════════════
+async function openReportDetail(id) {
+  openModal('modal-detail');
+  document.getElementById('mdl-title').textContent = 'Loading…';
+  document.getElementById('mdl-content').innerHTML  = loadingHTML();
+  document.getElementById('mdl-actions').innerHTML  = '';
+
+  const { data: r, error } = await DB.getReportById(id);
+  if (error || !r) {
+    document.getElementById('mdl-content').innerHTML = emptyHTML('⚠️','Not found','This report may have been deleted.');
+    return;
+  }
+  document.getElementById('mdl-title').textContent = r.description;
+  document.getElementById('mdl-content').innerHTML = `
+    <div class="info-row"><span class="info-key">Student LRN</span><span class="info-val" style="font-family:monospace">${r.student_lrn}</span></div>
+    <div class="info-row"><span class="info-key">QR Code</span><span class="info-val" style="font-family:monospace">${r.qr_id}</span></div>
+    <div class="info-row"><span class="info-key">Category</span><span class="info-val">${catEmoji(r.category)} ${esc(r.category)}</span></div>
+    <div class="info-row"><span class="info-key">Found at</span><span class="info-val">${esc(r.location)}</span></div>
+    <div class="info-row"><span class="info-key">Date found</span><span class="info-val">${r.found_date}</span></div>
+    <div class="info-row"><span class="info-key">Found by</span><span class="info-val">${esc(r.found_by)}</span></div>
+    ${r.notes ? `<div class="info-row"><span class="info-key">Notes</span><span class="info-val">${esc(r.notes)}</span></div>` : ''}
+    <div class="info-row"><span class="info-key">Status</span><span class="info-val"><span class="pill ${r.status==='unclaimed'?'pill-amber':'pill-green'}">${r.status}</span></span></div>
+    <div class="info-row"><span class="info-key">Reported</span><span class="info-val">${timeAgo(r.created_at)}</span></div>`;
+  document.getElementById('mdl-actions').innerHTML = r.status === 'unclaimed'
+    ? `<button class="btn btn-success" onclick="markReportStatus('${id}','claimed')">✅ Mark as claimed</button>
+       <button class="btn btn-danger btn-sm" onclick="deleteReport('${id}')">Delete</button>`
+    : `<button class="btn btn-sm" onclick="markReportStatus('${id}','unclaimed')">↩ Mark unclaimed</button>
+       <button class="btn btn-danger btn-sm" onclick="deleteReport('${id}')">Delete</button>`;
+}
+
+async function markReportStatus(id, status) {
+  const { error } = await DB.updateReport(id, { status });
+  if (error) { showToast('❌ ' + error.message); return; }
+  closeModal('modal-detail');
+  renderStaffNotifs();
+  renderItemsLog();
+  showToast(status === 'claimed' ? '✅ Marked as claimed' : '↩ Marked as unclaimed');
+}
+
+async function deleteReport(id) {
+  if (!confirm('Delete this item report?')) return;
+  const { error } = await DB.deleteReport(id);
+  if (error) { showToast('❌ ' + error.message); return; }
+  closeModal('modal-detail');
+  renderStaffNotifs();
+  renderItemsLog();
+  showToast('🗑️ Report deleted');
+}
+
+// ════════════════════════════════════════════════════════════
+//  SCAN PAGE (public)
+// ════════════════════════════════════════════════════════════
+async function renderScanPage(qrId) {
+  const el = document.getElementById('scan-content');
+  el.innerHTML = loadingHTML();
+
+  const [{ data: student, error: se }, { data: cfg }] = await Promise.all([
+    DB.getStudentByQR(qrId),
+    DB.getSettings()
+  ]);
+  const school = cfg?.school || 'SchoolFind';
+  const office = cfg?.office || 'the school office';
+
+  if (se || !student) {
+    el.innerHTML = `
+      <div class="scan-hero" style="background:linear-gradient(135deg,#c0392b,#8e2218)">
+        <div class="scan-hero-icon">❓</div>
+        <div class="scan-hero-title">QR code not found</div>
+        <div class="scan-hero-sub">${esc(qrId)} is not registered</div>
+      </div>
+      <div class="scan-body">
+        <p style="font-size:14px;color:var(--text2);text-align:center;line-height:1.7">
+          This QR code is not yet assigned to a student. Please leave the item at <strong>${esc(office)}</strong>.
+        </p>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="scan-hero">
+      <div class="scan-hero-icon">📦</div>
+      <div class="scan-hero-title">Item found!</div>
+      <div class="scan-hero-sub">${esc(school)}</div>
+    </div>
+    <div class="scan-body">
+      <div class="scan-student-card">
+        <div class="scan-avatar-big">${initials(student.full_name)}</div>
+        <div>
+          <div class="scan-name">${esc(student.full_name)}</div>
+          <div class="scan-grade">${esc(student.grade)}${student.section?' · '+esc(student.section):''}</div>
+        </div>
+      </div>
+      <div class="privacy-strip">🔒 Only the student's name and grade are shown publicly. Contact info is staff-only.</div>
+      <div class="report-section">
+        <h3>Fill in what you found — the student will be notified.</h3>
+        <div class="form-group">
+          <label class="form-label">What did you find? *</label>
+          <input type="text" class="form-input" id="s-desc" placeholder="e.g. Blue backpack with name tag">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Category *</label>
+            <select class="form-input" id="s-cat">
+              <option value="">Select…</option>
+              <option>Bag / backpack</option><option>Water bottle</option>
+              <option>Jacket / clothing</option><option>Stationery</option>
+              <option>Electronics</option><option>ID / card</option>
+              <option>Shoes</option><option>Umbrella</option>
+              <option>Food / container</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date found *</label>
+            <input type="date" class="form-input" id="s-date" value="${fmtDate(new Date())}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Where did you find it? *</label>
+          <input type="text" class="form-input" id="s-loc" placeholder="e.g. Room 3B, Cafeteria, Main gate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Your name (optional)</label>
+          <input type="text" class="form-input" id="s-finder" placeholder="So the student can thank you">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Additional notes (optional)</label>
+          <textarea class="form-input" id="s-notes" placeholder="Any other details…"></textarea>
+        </div>
+        <button class="btn btn-primary btn-full" id="btn-submit-report"
+          onclick="submitReport('${esc(student.lrn)}','${esc(qrId)}')">
+          📤 Submit report
+        </button>
+      </div>
+      <p style="font-size:12px;color:var(--text3);text-align:center;padding-bottom:24px">
+        Please leave the item at <strong>${esc(office)}</strong> if found on school grounds.
+      </p>
+    </div>`;
+}
+
+async function submitReport(lrn, qrId) {
+  const desc   = document.getElementById('s-desc').value.trim();
+  const cat    = document.getElementById('s-cat').value;
+  const date   = document.getElementById('s-date').value;
+  const loc    = document.getElementById('s-loc').value.trim();
+  const finder = document.getElementById('s-finder').value.trim();
+  const notes  = document.getElementById('s-notes').value.trim();
+
+  if (!desc || !cat || !loc || !date) { showToast('❌ Please fill in all required fields'); return; }
+
+  setBusy(true, 'btn-submit-report');
+  const { error } = await DB.addReport({ qrId, lrn, desc, category: cat, loc, foundBy: finder, foundDate: date, notes });
+  setBusy(false, 'btn-submit-report');
+
+  if (error) { showToast('❌ ' + error.message); return; }
+
+  document.getElementById('scan-content').innerHTML = `
+    <div class="scan-hero" style="background:linear-gradient(135deg,#2d6a2d,#1e4a1e)">
+      <div class="scan-hero-icon">✅</div>
+      <div class="scan-hero-title">Report submitted!</div>
+      <div class="scan-hero-sub">Thank you for returning this item</div>
+    </div>
+    <div class="scan-body" style="text-align:center;padding-top:32px">
+      <p style="font-size:15px;line-height:1.7;color:var(--text2);margin-bottom:24px">
+        The student has been notified that their <strong>${esc(desc)}</strong> was found at <strong>${esc(loc)}</strong>.
+        ${finder ? '<br>Your name has been recorded.' : ''}
+      </p>
+      <button class="btn" onclick="location.hash=''">← Back</button>
+    </div>`;
+  showToast('✅ Report submitted!');
+}
+
+// ════════════════════════════════════════════════════════════
+//  STUDENT DASHBOARD
+// ════════════════════════════════════════════════════════════
+async function renderStudentPage() {
+  const sess = getSession();
+  if (!sess || sess.role !== 'student') return;
+  document.getElementById('student-avatar').textContent = sess.initials;
+  document.getElementById('student-greeting').innerHTML = loadingHTML();
+  document.getElementById('student-notif-list').innerHTML = loadingHTML();
+
+  const [{ data: s }, { data: reports, error }, { data: cfg }] = await Promise.all([
+    DB.getStudentByLRN(sess.lrn),
+    DB.getReportsByStudent(sess.lrn),
+    DB.getSettings()
+  ]);
+
+  const unread = reports?.filter(r => !r.read).length || 0;
+
+  document.getElementById('student-greeting').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px">
+      <div class="avatar" style="width:48px;height:48px;font-size:18px">${sess.initials}</div>
+      <div>
+        <div style="font-size:16px;font-weight:600">Hi, ${esc(sess.name.split(' ')[0])} 👋</div>
+        <div style="font-size:13px;color:var(--text2)">${s?esc(s.grade):''}${s?.section?' · '+esc(s.section):''} · QR: <span style="font-family:monospace;font-weight:600">${s?.qr_id||'—'}</span></div>
+      </div>
+      ${unread > 0 ? `<span class="unread-count" style="margin-left:auto">${unread}</span>` : ''}
+    </div>`;
+
+  const badge = document.getElementById('student-unread-badge');
+  if (unread > 0) { badge.textContent = unread; badge.style.display = 'inline-flex'; }
+  else badge.style.display = 'none';
+
+  const el = document.getElementById('student-notif-list');
+  if (error || !reports?.length) {
+    el.innerHTML = emptyHTML('🔔','No notifications','When someone scans your QR code to report a found item, it will appear here.');
+    return;
+  }
+
+  el.innerHTML = '<div class="item-list-wrap">' + reports.map(r => `
+    <div class="notif ${!r.read?'unread':''}" onclick="openStudentNotif('${r.id}','${esc(cfg?.office||'school office')}')">
+      <div class="notif-dot ${r.read?'read':''}"></div>
+      <div class="notif-body">
+        <div class="notif-title">${catEmoji(r.category)} Your <strong>${esc(r.description)}</strong> was found</div>
+        <div class="notif-sub">At <strong>${esc(r.location)}</strong> on ${r.found_date}${r.found_by&&r.found_by!=='Anonymous'?' · by '+esc(r.found_by):''}.</div>
+        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+          <span class="pill ${r.status==='unclaimed'?'pill-amber':'pill-green'}">${r.status==='unclaimed'?'🟡 Waiting at office':'✅ Claimed'}</span>
+          ${r.notes ? '<span class="pill pill-gray">📝 Has notes</span>' : ''}
+        </div>
+        <div class="notif-time">${timeAgo(r.created_at)}</div>
+      </div>
+    </div>`).join('') + '</div>';
+
+  // Mark all as read async (fire and forget — no need to await UI)
+  if (unread > 0) DB.markStudentReportsRead(sess.lrn);
+}
+
+async function openStudentNotif(id, office) {
+  openModal('modal-detail');
+  document.getElementById('mdl-title').textContent = 'Loading…';
+  document.getElementById('mdl-content').innerHTML = loadingHTML();
+  document.getElementById('mdl-actions').innerHTML = '';
+
+  const { data: r, error } = await DB.getReportById(id);
+  if (error || !r) { document.getElementById('mdl-content').innerHTML = emptyHTML('⚠️','Not found',''); return; }
+
+  document.getElementById('mdl-title').textContent = r.description;
+  document.getElementById('mdl-content').innerHTML = `
+    <div style="text-align:center;padding:8px 0 16px">
+      <div style="font-size:40px;margin-bottom:8px">${catEmoji(r.category)}</div>
+      <div style="font-size:18px;font-weight:700">${esc(r.description)}</div>
+      <div style="margin-top:8px"><span class="pill ${r.status==='unclaimed'?'pill-amber':'pill-green'}">${r.status==='unclaimed'?'🟡 Waiting for you':'✅ Claimed'}</span></div>
+    </div>
+    <div class="info-row"><span class="info-key">Where found</span><span class="info-val">${esc(r.location)}</span></div>
+    <div class="info-row"><span class="info-key">Date found</span><span class="info-val">${r.found_date}</span></div>
+    <div class="info-row"><span class="info-key">Found by</span><span class="info-val">${esc(r.found_by)}</span></div>
+    ${r.notes ? `<div class="info-row"><span class="info-key">Notes</span><span class="info-val">${esc(r.notes)}</span></div>` : ''}
+    <div style="background:var(--blue-bg);border-radius:10px;padding:14px;margin-top:12px;font-size:13px;color:var(--blue-text);line-height:1.6">
+      📍 Claim your item at the <strong>${esc(office)}</strong>. Bring your school ID.
+    </div>`;
+  document.getElementById('mdl-actions').innerHTML = `<button class="btn" onclick="closeModal('modal-detail')">Close</button>`;
+}
+
+// ════════════════════════════════════════════════════════════
+//  CSV IMPORT / EXPORT
+// ════════════════════════════════════════════════════════════
+async function exportCSV() {
+  const { data: students } = await DB.getStudents();
+  if (!students?.length) { showToast('No students to export'); return; }
+  const rows = [['LRN','Name','Grade','Section','QR ID','Guardian Contact']];
+  students.forEach(s => rows.push([s.lrn, s.full_name, s.grade, s.section||'', s.qr_id||'', s.contact||'']));
+  const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'schoolfind_students.csv';
+  a.click();
+  showToast('⬇️ Exported ' + students.length + ' students');
+}
+
+async function importCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const lines = text.split('\n').slice(1); // skip header
+  const rows = [];
+  lines.forEach(line => {
+    if (!line.trim()) return;
+    const cols = line.split(',').map(c => c.replace(/^"|"$/g, '').replace(/""/g, '"').trim());
+    const [lrn, full_name, grade, section, qr_id, contact] = cols;
+    if (!lrn || !full_name) return;
+    if (lrn.length !== 12 || !/^\d+$/.test(lrn)) return;
+    rows.push({ lrn, full_name, grade: grade||'', section: section||null, qr_id: qr_id||null, contact: contact||null });
+  });
+  if (!rows.length) { showToast('❌ No valid rows found in CSV'); input.value = ''; return; }
+  const { error } = await DB.importStudents(rows);
+  if (error) { showToast('❌ Import error: ' + error.message); }
+  else { showToast(`✅ Imported ${rows.length} students`); await renderStudentList(); }
+  input.value = '';
+}
+
+// ════════════════════════════════════════════════════════════
+//  UI HELPERS
+// ════════════════════════════════════════════════════════════
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-bg').forEach(bg =>
+  bg.addEventListener('click', e => { if (e.target === bg) bg.classList.remove('open'); }));
+
+let _toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+// XSS-safe string escaping for inline HTML
+function esc(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+}
+
+// ════════════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════════════
+checkRoute();
+</script>
+</body>
+</html>
