@@ -247,7 +247,7 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
 
   <div id="staff-tab-students" class="content" style="display:none">
     <div class="search-bar">
-      <input type="text" class="form-input" id="student-search" placeholder="Search name, LRN, grade…" oninput="renderStudentList()">
+      <input type="text" class="form-input" id="student-search" placeholder="Search name, Contact Number, grade…" oninput="renderStudentList()">
     </div>
     <div class="section-label" style="display:flex;align-items:center;justify-content:space-between">
       <span>Students</span>
@@ -363,8 +363,8 @@ code{font-family:monospace;background:var(--surface2);padding:1px 5px;border-rad
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">LRN (12 digits)</label>
-        <input type="text" class="form-input" id="ns-lrn" placeholder="123456789012" maxlength="12" inputmode="numeric">
+        <label class="form-label">Contact Number (11 digits)</label>
+        <input type="text" class="form-input" id="ns-lrn" placeholder="09123456789" maxlength="11" inputmode="numeric">
       </div>
       <div class="form-group">
         <label class="form-label">Grade level</label>
@@ -639,10 +639,10 @@ async function doLogin() {
   } else {
     const lrn  = document.getElementById('login-lrn').value.trim();
     const last = document.getElementById('login-lastname').value.trim().toLowerCase();
-    if (!lrn || !last) { showToast('❌ Enter LRN and last name'); setBusy(false,'login-btn'); return; }
+    if (!lrn || !last) { showToast('❌ Enter Contact Number and last name'); setBusy(false,'login-btn'); return; }
 
     const { data: s, error } = await DB.getStudentByLRN(lrn);
-    if (error || !s) { showToast('❌ LRN not found'); setBusy(false, 'login-btn'); return; }
+    if (error || !s) { showToast('❌ Contact Number not found'); setBusy(false, 'login-btn'); return; }
     const lastName = s.full_name.trim().split(/\s+/).pop().toLowerCase();
     if (lastName !== last) { showToast('❌ Last name does not match'); setBusy(false, 'login-btn'); return; }
 
@@ -847,15 +847,15 @@ async function saveNewStudent() {
   const qrId    = document.getElementById('ns-qr').value.trim().toUpperCase();
   const contact = document.getElementById('ns-contact').value.trim();
 
-  if (!name || !lrn || !grade || !qrId) { showToast('❌ Name, LRN, grade and QR ID required'); return; }
-  if (lrn.length !== 12 || !/^\d+$/.test(lrn)) { showToast('❌ LRN must be exactly 12 digits'); return; }
+  if (!name || !lrn || !grade || !qrId) { showToast('❌ Name, Contact Number, grade and QR ID required'); return; }
+  if (lrn.length !== 11 || !/^\d+$/.test(lrn)) { showToast('❌ Contact Number must be exactly 11 digits'); return; }
 
   setBusy(true, 'btn-save-student');
   const { error } = await DB.addStudent({ lrn, name, grade, section, qrId, contact });
   setBusy(false, 'btn-save-student');
 
   if (error) {
-    const msg = error.message.includes('lrn') ? 'LRN already registered'
+    const msg = error.message.includes('lrn') ? 'Contact Number already registered'
               : error.message.includes('qr_id') ? 'QR ID already assigned to another student'
               : error.message;
     showToast('❌ ' + msg);
@@ -890,7 +890,7 @@ async function openStudentDetail(lrn) {
       </div>
       <span class="pill pill-blue" style="margin-left:auto;font-family:monospace">${s.qr_id||'—'}</span>
     </div>
-    <div class="info-row"><span class="info-key">LRN</span><span class="info-val" style="font-family:monospace">${s.lrn}</span></div>
+    <div class="info-row"><span class="info-key">Contact Number</span><span class="info-val" style="font-family:monospace">${s.lrn}</span></div>
     <div class="info-row"><span class="info-key">Guardian contact</span><span class="info-val">${esc(s.contact||'—')}</span></div>
     <div class="info-row"><span class="info-key">QR scan URL</span><span class="info-val" style="font-size:11px;word-break:break-all;color:var(--blue)">${esc(scanUrl)}</span></div>
     <div style="margin-top:16px;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">Item reports (${reports?.length||0})</div>
@@ -930,7 +930,7 @@ async function openReportDetail(id) {
   }
   document.getElementById('mdl-title').textContent = r.description;
   document.getElementById('mdl-content').innerHTML = `
-    <div class="info-row"><span class="info-key">Student LRN</span><span class="info-val" style="font-family:monospace">${r.student_lrn}</span></div>
+    <div class="info-row"><span class="info-key">Contact Number</span><span class="info-val" style="font-family:monospace">${r.student_lrn}</span></div>
     <div class="info-row"><span class="info-key">QR Code</span><span class="info-val" style="font-family:monospace">${r.qr_id}</span></div>
     <div class="info-row"><span class="info-key">Category</span><span class="info-val">${catEmoji(r.category)} ${esc(r.category)}</span></div>
     <div class="info-row"><span class="info-key">Found at</span><span class="info-val">${esc(r.location)}</span></div>
@@ -1165,7 +1165,7 @@ async function openStudentNotif(id, office) {
 async function exportCSV() {
   const { data: students } = await DB.getStudents();
   if (!students?.length) { showToast('No students to export'); return; }
-  const rows = [['LRN','Name','Grade','Section','QR ID','Guardian Contact']];
+  const rows = [['Contact Number','Name','Grade','Section','QR ID','Guardian Contact']];
   students.forEach(s => rows.push([s.lrn, s.full_name, s.grade, s.section||'', s.qr_id||'', s.contact||'']));
   const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
   const a = document.createElement('a');
@@ -1186,7 +1186,7 @@ async function importCSV(input) {
     const cols = line.split(',').map(c => c.replace(/^"|"$/g, '').replace(/""/g, '"').trim());
     const [lrn, full_name, grade, section, qr_id, contact] = cols;
     if (!lrn || !full_name) return;
-    if (lrn.length !== 12 || !/^\d+$/.test(lrn)) return;
+    if (lrn.length !== 11 || !/^\d+$/.test(lrn)) return;
     rows.push({ lrn, full_name, grade: grade||'', section: section||null, qr_id: qr_id||null, contact: contact||null });
   });
   if (!rows.length) { showToast('❌ No valid rows found in CSV'); input.value = ''; return; }
